@@ -1,0 +1,124 @@
+# Komposition für die AWS RDS Postgres-Datenbank und Kubernetes Deployment
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: composites.devops.stillforward.de.aws
+  labels:
+    provider: aws
+spec:
+  writeConnectionSecretsToNamespace: crossplane-system
+  compositeTypeRef:
+    apiVersion: devops.stillforward.de/v1alpha1
+    kind: DevEnvironment
+  resources:
+    - name: postgresdb
+      base:
+
+apiVersion: rds.aws.upbound.io/v1beta1
+kind: Instance
+metadata:
+  annotations:
+    meta.upbound.io/example-id: rds/v1beta1/instance
+    uptest.upbound.io/timeout: "3600"
+  labels:
+    testing.upbound.io/example-name: example-dbinstance
+  name: example-dbinstance-${Rand.RFC1123Subdomain}
+spec:
+  forProvider:
+    allocatedStorage: 20
+    autoGeneratePassword: true
+    autoMinorVersionUpgrade: true
+    backupRetentionPeriod: 14
+    backupWindow: 09:46-10:16
+    engine: postgres
+    engineVersion: "13.7"
+    instanceClass: db.t3.micro
+    kmsKeyIdSelector:
+      matchLabels:
+        testing.upbound.io/example-name: sample-key
+    maintenanceWindow: Mon:00:00-Mon:03:00
+    name: example
+    passwordSecretRef:
+      key: password
+      name: example-dbinstance
+      namespace: upbound-system
+    publiclyAccessible: false
+    region: us-west-1
+    skipFinalSnapshot: true
+    storageEncrypted: true
+    storageType: gp2
+    username: adminuser
+  writeConnectionSecretToRef:
+    name: example-dbinstance-out
+    namespace: default
+
+    
+        apiVersion: database.aws.crossplane.io/v1beta1
+        kind: RDSInstance
+        spec:
+          forProvider:
+            region: eu-central-1
+            dbInstanceClass: db.t3.medium
+            masterUsername: masteruser
+            allocatedStorage: 10
+            engine: postgres
+            engineVersion: "12"
+            skipFinalSnapshotBeforeDeletion: true
+
+
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: "spec.resources[?(@.type=='database')].spec.location"
+          toFieldPath: "spec.forProvider.region"
+          transforms:
+            - type: map
+              map:
+                EU: eu-central-1
+                US: us-east-1
+        - fromFieldPath: "spec.resources[?(@.type=='database')].spec.storageSize"
+          toFieldPath: "spec.forProvider.allocatedStorage"
+      connectionDetails:
+        - fromConnectionSecretKey: username
+        - fromConnectionSecretKey: password
+        - fromConnectionSecretKey: endpoint
+        - fromConnectionSecretKey: port
+
+
+
+
+
+
+    - name: k8sdeployment
+      base:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: example-deployment
+          labels:
+            app: example
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: example
+          template:
+            metadata:
+              labels:
+                app: example
+            spec:
+              containers:
+                - name: example-container
+                  image: nginx:1.17.9
+                  ports:
+                    - containerPort: 80
+                  resources:
+                    requests:
+                      cpu: "500m"
+                      memory: "512Mi"
+      patches:
+        - fromFieldPath: "spec.resources[?(@.type=='deployment')].spec.replicas"
+          toFieldPath: "spec.replicas"
+        - fromFieldPath: "spec.resources[?(@.type=='deployment')].spec.cpu"
+          toFieldPath: "spec.template.spec.containers[0].resources.requests.cpu"
+        - fromFieldPath: "spec.resources[?(@.type=='deployment')].spec.memory"
+          toFieldPath: "spec.template.spec.containers[0].resources.requests.memory"
