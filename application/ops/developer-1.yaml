@@ -1,20 +1,22 @@
 apiVersion: devops.stillforward.de/v1alpha1
-kind: DevEnvironment
+kind: DevEnvironmentClaim
 metadata:
-  name: dev-env-tom-s
+  name: dev-env-tom-s-claming-tom
+  namespace: tom
 spec:
-  resources:
-    - type: "database"
-      spec:
-        location: "eu-central-1"
-        storageSize: "10GB"
-    - type: "deployment"
-      spec:
-        replicas: "1"        
-        cpu: "4"
-        memory: "8GB"
-  team:
-    name: "Entwicklerteam A"
+    databaseLocation: "EU"
+    databaseStorageSize: 13
+    # - type: "databas"
+    #   spec:
+    #     location: "eu-central-1"
+    #     storageSize: "10GB"
+    # - type: "deployment"
+    #   spec:
+    #     replicas: "1"        
+    #     cpu: "4"
+    #     memory: "8GB"
+    team:
+      name: "Entwicklerteam A"
   # accessControl:
   #   - user: "developer1"
   #     permissions: "read-write"

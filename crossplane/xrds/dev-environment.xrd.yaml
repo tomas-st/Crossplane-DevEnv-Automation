@@ -11,45 +11,22 @@ spec:
     kind: DevEnvironmentClaim
     plural: devenvironmentclaim
   versions:
-  - name: v1alpha1
-    served: true
-    referenceable: true
-    schema:
-      openAPIV3Schema:
-        type: object
-        properties:
-          spec:
-            type: object
-            properties:
-              resources:
-                type: array
-                items:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                databaseLocation:
+                  type: string
+                databaseStorageSize:
+                  type: number
+                team:
                   type: object
                   properties:
-                    type:
+                    name:
                       type: string
-                    spec:
-                      type: object
-                      properties:
-                        # Spezifikationen für die Datenbank
-                        location:
-                          type: string
-                        storageSize:
-                          type: string
-                        # Spezifikationen für das Kubernetes Deployment
-                        replicas:
-                          type: string
-                        cpu:
-                          type: string
-                        memory:
-                          type: string
-              team:
-                type: object
-                properties:
-                  name:
-                    type: string
-  connectionSecretKeys:
-    - username
-    - password
-    - endpoint
-    - port
